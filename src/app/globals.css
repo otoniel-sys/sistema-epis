@@ -290,13 +290,22 @@ tr:hover td {
   position: fixed;
   bottom: 1.5rem;
   right: 2rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  opacity: 0.3;
-  pointer-events: none;
+  font-size: 0.85rem;
+  color: #64748b;
+  background-color: #ffffff;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   z-index: 9999;
-  letter-spacing: 0.1em;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  pointer-events: none;
+}
+
+.watermark-brand {
+  color: #4f46e5;
   font-weight: 600;
-  text-transform: uppercase;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }

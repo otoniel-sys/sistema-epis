@@ -25,7 +25,7 @@ export default function RootLayout({
             </div>
           </main>
           <div className="watermark">
-            Desenvolvido por TI dissobel O
+            Desenvolvido por <span className="watermark-brand">TI Dissobel</span>
           </div>
         </div>
       </body>
