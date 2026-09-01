@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Employee {
+  id           String       @id @default(cuid())
+  name         String
+  role         String
+  department   String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  assignments  Assignment[]
+}
+
+model Equipment {
+  id                  String             @id @default(cuid())
+  description         String
+  ca                  String?
+  type                String             // EPI, UNIFORME
+  idealStock          Int                @default(0)
+  unitValue           Float              @default(0.0)
+  currentStock        Int                @default(0)
+  lifespanMonths      Int                @default(0)
+  replacementCriteria String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  transactions        StockTransaction[]
+  assignments         Assignment[]
+}
+
+model StockTransaction {
+  id          String    @id @default(cuid())
+  equipmentId String
+  equipment   Equipment @relation(fields: [equipmentId], references: [id])
+  quantity    Int       // Positive for ENTRADA, negative for SAIDA_AJUSTE
+  unitValue   Float?
+  type        String    // ENTRADA, AJUSTE
+  date        DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+}
+
+model Assignment {
+  id             String    @id @default(cuid())
+  employeeId     String
+  employee       Employee  @relation(fields: [employeeId], references: [id])
+  equipmentId    String
+  equipment      Equipment @relation(fields: [equipmentId], references: [id])
+  assignedDate   DateTime  @default(now())
+  expirationDate DateTime
+  status         String    @default("ACTIVE") // ACTIVE, RETURNED, REPLACED
+  returnDate     DateTime?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
