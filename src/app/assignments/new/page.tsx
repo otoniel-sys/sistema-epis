@@ -6,9 +6,12 @@ import prisma from '@/lib/prisma'
 export const revalidate = 0;
 
 export default async function NewAssignmentPage() {
-  const employees = await prisma.employee.findMany({ orderBy: { name: 'asc' } })
+  const employees = await prisma.employee.findMany({ 
+    where: { isActive: true },
+    orderBy: { name: 'asc' } 
+  })
   const equipments = await prisma.equipment.findMany({ 
-    where: { currentStock: { gt: 0 } },
+    where: { currentStock: { gt: 0 }, isActive: true },
     orderBy: { description: 'asc' } 
   })
 

@@ -15,6 +15,7 @@ model Employee {
   department   String
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+  isActive     Boolean      @default(true)
   assignments  Assignment[]
 }
 
@@ -30,6 +31,7 @@ model Equipment {
   replacementCriteria String?
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
+  isActive            Boolean            @default(true)
   transactions        StockTransaction[]
   assignments         Assignment[]
 }

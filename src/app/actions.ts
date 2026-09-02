@@ -100,9 +100,11 @@ export async function deleteEmployee(id: string) {
     throw new Error('Não é possível excluir um colaborador com EPIs ativos. Dê baixa nos EPIs primeiro.')
   }
 
-  // Delete history of returned assignments and then the employee
-  await prisma.assignment.deleteMany({ where: { employeeId: id } })
-  await prisma.employee.delete({ where: { id } })
+  // Atualiza para inativo ao invés de apagar do banco
+  await prisma.employee.update({
+    where: { id },
+    data: { isActive: false }
+  })
 
   revalidatePath('/employees')
   redirect('/employees')
@@ -151,19 +153,20 @@ export async function returnAssignment(assignmentId: string, employeeId: string)
 }
 
 export async function deleteEquipment(id: string) {
-  // Check if it has any assignments
+  // Check if it has any active assignments
   const activeAssignments = await prisma.assignment.count({
-    where: { equipmentId: id }
+    where: { equipmentId: id, status: 'ACTIVE' }
   })
 
   if (activeAssignments > 0) {
-    throw new Error('Não é possível excluir um EPI que já possui histórico de entregas. Em vez disso, altere o estoque ideal e atual para zero.')
+    throw new Error('Não é possível excluir um EPI que possui entregas ativas. Dê baixa nos EPIs primeiro.')
   }
 
-  // Delete transaction history
-  await prisma.stockTransaction.deleteMany({ where: { equipmentId: id } })
-  // Delete the equipment itself
-  await prisma.equipment.delete({ where: { id } })
+  // Soft delete the equipment
+  await prisma.equipment.update({
+    where: { id },
+    data: { isActive: false }
+  })
 
   revalidatePath('/inventory')
   redirect('/inventory')

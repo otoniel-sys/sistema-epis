@@ -1,16 +1,44 @@
 :root {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-glass: rgba(30, 41, 59, 0.7);
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --accent-primary: #3b82f6;
-  --accent-hover: #2563eb;
-  --accent-success: #22c55e;
-  --accent-warning: #eab308;
-  --accent-danger: #ef4444;
-  --border-color: #334155;
-  --border-radius: 8px;
+  /* Base App Mapping */
+  --bg-primary: #07070e;
+  --bg-secondary: rgba(255,255,255,0.055);
+  --bg-glass: rgba(7, 7, 14, 0.7);
+  --text-primary: #f5f6fb;
+  --text-secondary: #7c82a0;
+  --accent-primary: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-success: #34d399;
+  --accent-warning: #fbbf24;
+  --accent-danger: #fb7185;
+  --border-color: rgba(255,255,255,0.1);
+  --border-radius: 14px;
+
+  /* Dark Glass Tokens */
+  --bg: #07070e;
+  --plane: rgba(255,255,255,.055);
+  --plane-2: rgba(255,255,255,.03);
+  --stroke: rgba(255,255,255,.1);
+  --ink: #f5f6fb;
+  --ink-2: #b8bdd4;
+  --muted: #7c82a0;
+  --acc: #8b5cf6;
+  --acc-2: #22d3ee;
+  --good: #34d399;
+  --bad: #fb7185;
+  --warn: #fbbf24;
+  --good-bg: rgba(52,211,153,.14);
+  --bad-bg: rgba(251,113,133,.14);
+  --warn-bg: rgba(251,191,36,.14);
+  --track: rgba(255,255,255,.09);
+  --grid: rgba(255,255,255,.06);
+  --radius: 14px;
+  --bw: 1px;
+  --shadow: 0 20px 55px -22px rgba(0,0,0,.8), 0 1px 3px rgba(0,0,0,.5);
+  --c1: #8b5cf6;
+  --c2: #22d3ee;
+  --c3: #34d399;
+  --c4: #fbbf24;
+  --c5: #fb7185;
 }
 
 * {
@@ -20,7 +48,7 @@
 }
 
 body {
-  background: radial-gradient(circle at top right, #1e293b, #0f172a);
+  background: var(--bg);
   background-attachment: fixed;
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -49,6 +77,11 @@ input, select {
   border-radius: var(--border-radius);
   outline: none;
   transition: border-color 0.2s;
+}
+
+option {
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 input:focus, select:focus {
@@ -306,6 +339,25 @@ tr:hover td {
 }
 
 .watermark-brand {
-  color: #4f46e5;
+  color: var(--accent-primary);
   font-weight: 600;
 }
+
+/* ---- LAYOUT: Grid Dashboard ---- */
+.grade { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+.grade > div { min-width: 0; display: flex; flex-direction: column; }
+.grade > div > * { flex: 1; }
+.grade section { box-sizing: border-box; position: relative; transition: transform .2s ease; }
+@media (max-width: 900px) { .grade > div { grid-column: span 12 !important; } }
+
+/* ---- assinatura glass: fio de luz + hover ---- */
+.grade section::before { content: ''; position: absolute; left: 16px; right: 16px; top: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--acc), transparent); opacity: .32; pointer-events: none; transition: opacity .2s ease; }
+.grade section:hover { transform: translateY(-2px); }
+.grade section:hover::before { opacity: .6; }
+@media (prefers-reduced-motion: reduce) { .grade section, .grade section::before { transition: none; } .grade section:hover { transform: none; } }
+
+/* ---- Componentes Dark Glass ---- */
+.topo { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 22px; flex-wrap: wrap; }
+.marca h1 { font-family: var(--display), system-ui, sans-serif; font-size: 21px; font-weight: 700; letter-spacing: -.3px; }
+.marca p { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+.periodo { display: inline-flex; align-items: center; gap: 8px; padding: 9px 15px; border: var(--bw) solid var(--stroke); border-radius: var(--radius); background: var(--plane); font-size: 13px; font-weight: 600; color: var(--ink); box-shadow: var(--shadow); }

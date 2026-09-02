@@ -1,21 +1,54 @@
 import prisma from '@/lib/prisma'
-import { Plus } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import Link from 'next/link'
 
 export const revalidate = 0;
 
-export default async function InventoryPage() {
+export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ q?: string, status?: string }> }) {
+  const resolvedParams = await searchParams;
+  const q = resolvedParams.q || '';
+  const status = resolvedParams.status || '';
+
   const equipments = await prisma.equipment.findMany({
+    where: { 
+      isActive: true,
+      description: q ? { contains: q, mode: 'insensitive' } : undefined
+    },
     orderBy: { description: 'asc' }
   })
+
+  const filteredEquipments = equipments.filter(eq => {
+    if (status === 'zerado') return eq.currentStock <= 0;
+    if (status === 'comprar') return eq.currentStock < eq.idealStock;
+    if (status === 'ok') return eq.currentStock >= eq.idealStock && eq.currentStock > 0;
+    return true;
+  });
 
   return (
     <>
       <div className="page-header">
-        <h1>EPIs & Estoque</h1>
-        <Link href="/inventory/new" className="btn-primary">
-          <Plus size={20} /> Novo EPI
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <h1>EPIs & Estoque</h1>
+          
+          <form style={{ display: 'flex', gap: '0.5rem', flex: 1, minWidth: '300px', justifyContent: 'flex-end' }} method="GET">
+            <select name="status" defaultValue={status} style={{ padding: '0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)' }}>
+              <option value="">Todos os status</option>
+              <option value="zerado">Zerados</option>
+              <option value="comprar">Precisam de compra</option>
+              <option value="ok">Estoque OK</option>
+            </select>
+            
+            <input type="text" name="q" placeholder="Buscar EPI..." defaultValue={q} style={{ flex: 1, maxWidth: '250px', padding: '0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)' }} />
+            
+            <button type="submit" className="btn-secondary" style={{ padding: '0.5rem' }} title="Buscar">
+              <Search size={20} />
+            </button>
+          </form>
+
+          <Link href="/inventory/new" className="btn-primary">
+            <Plus size={20} /> Novo EPI
+          </Link>
+        </div>
       </div>
 
       <div className="card" style={{ padding: 0 }}>
@@ -34,7 +67,7 @@ export default async function InventoryPage() {
               </tr>
             </thead>
             <tbody>
-              {equipments.map(eq => {
+              {filteredEquipments.map(eq => {
                 const isZero = eq.currentStock <= 0;
                 const needToBuy = eq.currentStock < eq.idealStock;
                 
@@ -67,6 +100,13 @@ export default async function InventoryPage() {
                   </tr>
                 )
               })}
+              {filteredEquipments.length === 0 && (
+                <tr>
+                  <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                    Nenhum EPI encontrado com esses filtros.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

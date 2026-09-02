@@ -9,7 +9,7 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
   const q = resolvedParams.q || '';
 
   const employees = await prisma.employee.findMany({
-    where: q ? { name: { contains: q } } : undefined,
+    where: q ? { name: { contains: q }, isActive: true } : { isActive: true },
     orderBy: { name: 'asc' },
     include: {
       assignments: {
