@@ -189,18 +189,18 @@ export default async function Dashboard() {
                 Nenhum EPI vencendo nos próximos 30 dias.
               </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
+              <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '350px' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
+                  <thead style={{ position: 'sticky', top: 0, background: 'var(--plane)', zIndex: 1 }}>
                     <tr>
-                      <th style={{ textAlign: 'left', fontSize: '10.5px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', padding: '0 8px 10px 0', borderBottom: 'var(--bw) solid var(--stroke)' }}>Colaborador</th>
-                      <th style={{ textAlign: 'left', fontSize: '10.5px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', padding: '0 8px 10px 0', borderBottom: 'var(--bw) solid var(--stroke)' }}>EPI</th>
-                      <th style={{ textAlign: 'left', fontSize: '10.5px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', padding: '0 8px 10px 0', borderBottom: 'var(--bw) solid var(--stroke)' }}>Entrega</th>
-                      <th style={{ textAlign: 'right', fontSize: '10.5px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', padding: '0 8px 10px 0', borderBottom: 'var(--bw) solid var(--stroke)' }}>Vencimento</th>
+                      <th style={{ textAlign: 'left', fontSize: '10.5px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', padding: '10px 8px 10px 0', borderBottom: 'var(--bw) solid var(--stroke)' }}>Colaborador</th>
+                      <th style={{ textAlign: 'left', fontSize: '10.5px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', padding: '10px 8px 10px 0', borderBottom: 'var(--bw) solid var(--stroke)' }}>EPI</th>
+                      <th style={{ textAlign: 'left', fontSize: '10.5px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', padding: '10px 8px 10px 0', borderBottom: 'var(--bw) solid var(--stroke)' }}>Entrega</th>
+                      <th style={{ textAlign: 'right', fontSize: '10.5px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', padding: '10px 8px 10px 0', borderBottom: 'var(--bw) solid var(--stroke)' }}>Vencimento</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {expiring.slice(0, 5).map(a => {
+                    {expiring.map(a => {
                       const isExpired = a.expirationDate < today
                       return (
                         <tr key={a.id}>

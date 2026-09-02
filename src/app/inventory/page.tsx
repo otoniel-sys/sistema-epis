@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma'
-import { Plus, Search } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import Link from 'next/link'
+import { InventoryFilter } from '@/components/InventoryFilter'
 
 export const revalidate = 0;
 
@@ -30,20 +31,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%', justifyContent: 'space-between', flexWrap: 'wrap' }}>
           <h1>EPIs & Estoque</h1>
           
-          <form style={{ display: 'flex', gap: '0.5rem', flex: 1, minWidth: '300px', justifyContent: 'flex-end' }} method="GET">
-            <select name="status" defaultValue={status} style={{ padding: '0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)' }}>
-              <option value="">Todos os status</option>
-              <option value="zerado">Zerados</option>
-              <option value="comprar">Precisam de compra</option>
-              <option value="ok">Estoque OK</option>
-            </select>
-            
-            <input type="text" name="q" placeholder="Buscar EPI..." defaultValue={q} style={{ flex: 1, maxWidth: '250px', padding: '0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)' }} />
-            
-            <button type="submit" className="btn-secondary" style={{ padding: '0.5rem' }} title="Buscar">
-              <Search size={20} />
-            </button>
-          </form>
+          <InventoryFilter />
 
           <Link href="/inventory/new" className="btn-primary">
             <Plus size={20} /> Novo EPI

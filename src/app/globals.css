@@ -91,7 +91,8 @@ input:focus, select:focus {
 /* Layout Utilities */
 .app-container {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .sidebar {
