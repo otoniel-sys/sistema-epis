@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma'
-import { TrendingUp } from 'lucide-react'
+import { TrendingUp, ArrowDownToLine, ArrowUpFromLine, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 import { GaugeChart, LineChart } from '@/components/DashboardCharts'
 
 export const revalidate = 0;
@@ -38,6 +39,41 @@ export default async function Dashboard() {
     }
   })
 
+  // 3. Movimentação do Mês Atual (Entradas vs Saídas)
+  const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1, 0, 0, 0, 0)
+  const currentMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999)
+
+  const monthEntries = await prisma.stockTransaction.findMany({
+    where: {
+      type: 'ENTRADA',
+      date: { gte: currentMonthStart, lte: currentMonthEnd }
+    },
+    include: { equipment: true }
+  })
+
+  const monthAssignments = await prisma.assignment.findMany({
+    where: {
+      assignedDate: { gte: currentMonthStart, lte: currentMonthEnd }
+    },
+    include: { equipment: true }
+  })
+
+  let monthEntriesQty = 0
+  let monthEntriesVal = 0
+  monthEntries.forEach(e => {
+    monthEntriesQty += e.quantity
+    monthEntriesVal += e.quantity * (e.unitValue ?? e.equipment?.unitValue ?? 0)
+  })
+
+  let monthExitsQty = monthAssignments.length
+  let monthExitsVal = 0
+  monthAssignments.forEach(a => {
+    monthExitsVal += (a.equipment?.unitValue ?? 0)
+  })
+
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+  const currentMonthName = monthNames[today.getMonth()]
+
   const lineLabels: string[] = []
   const lineData: number[] = []
   
@@ -54,7 +90,7 @@ export default async function Dashboard() {
     lineData.push(count)
   }
 
-  // 3. Top Departamentos (Bar List)
+  // 4. Top Departamentos (Bar List)
   const deptsMap: Record<string, number> = {}
   assignments.forEach(a => {
     const dept = a.employee.department || 'Outros'
@@ -77,6 +113,8 @@ export default async function Dashboard() {
   }).sort((a, b) => a.expirationDate.getTime() - b.expirationDate.getTime())
 
   const formattedTotal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)
+  const formattedEntriesVal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(monthEntriesVal)
+  const formattedExitsVal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(monthExitsVal)
 
   return (
     <>
@@ -85,26 +123,76 @@ export default async function Dashboard() {
           <h1>Dashboard de EPIs</h1>
           <p>Visão geral do estoque e entregas · Tempo Real</p>
         </div>
-        <span className="periodo">Últimos 30 dias</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Link href="/reports" className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+            Ver Movimentações do Mês <ArrowRight size={14} />
+          </Link>
+          <span className="periodo">Últimos 30 dias</span>
+        </div>
       </div>
 
       <div className="grade">
-        <div style={{ gridColumn: 'span 12' }}>
-          <section style={{ background: 'var(--plane)', border: 'var(--bw) solid var(--stroke)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)', padding: '20px 22px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        {/* Card Valor Total Estoque */}
+        <div style={{ gridColumn: 'span 6' }}>
+          <section style={{ background: 'var(--plane)', border: 'var(--bw) solid var(--stroke)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)', padding: '20px 22px', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '16px', marginBottom: '14px' }}>
               <div><b style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>Valor Total em Estoque</b></div>
             </div>
             
-            <div style={{ fontSize: '46px', fontWeight: 800, letterSpacing: '-1.8px', lineHeight: 1, color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>
+            <div style={{ fontSize: '38px', fontWeight: 800, letterSpacing: '-1.5px', lineHeight: 1, color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>
               {formattedTotal}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '14px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 700, padding: '5px 10px', borderRadius: 'var(--radius)', color: 'var(--good)', background: 'var(--good-bg)' }}>
+              <span style={{ fontSize: '12.5px', fontWeight: 700, padding: '4px 8px', borderRadius: 'var(--radius)', color: 'var(--good)', background: 'var(--good-bg)' }}>
                 {equipments.length} EPIs cadastrados
               </span>
-              <span style={{ fontSize: '12.5px', color: 'var(--muted)' }}>
-                <TrendingUp size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }}/> Atualizado agora
+              <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
+                <TrendingUp size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }}/> Saldo atualizado
               </span>
+            </div>
+          </section>
+        </div>
+
+        {/* Card Entradas no Mês */}
+        <div style={{ gridColumn: 'span 3' }}>
+          <section style={{ background: 'var(--plane)', border: 'var(--bw) solid var(--stroke)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)', padding: '20px 22px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'var(--good)' }} />
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <b style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>Entradas em {currentMonthName}</b>
+                <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'var(--good-bg)', color: 'var(--good)', fontSize: '10.5px', fontWeight: 700 }}>
+                  COMPRAS
+                </span>
+              </div>
+              <div style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.8px', color: 'var(--good)', fontVariantNumeric: 'tabular-nums' }}>
+                {formattedEntriesVal}
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid var(--stroke)' }}>
+              <span style={{ fontSize: '12px', color: 'var(--muted)' }}>Peças recebidas:</span>
+              <strong style={{ fontSize: '13px', color: 'var(--ink)' }}>+{monthEntriesQty} un.</strong>
+            </div>
+          </section>
+        </div>
+
+        {/* Card Saídas no Mês */}
+        <div style={{ gridColumn: 'span 3' }}>
+          <section style={{ background: 'var(--plane)', border: 'var(--bw) solid var(--stroke)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)', padding: '20px 22px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'var(--bad)' }} />
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <b style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>Saídas em {currentMonthName}</b>
+                <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'var(--bad-bg)', color: 'var(--bad)', fontSize: '10.5px', fontWeight: 700 }}>
+                  ENTREGAS
+                </span>
+              </div>
+              <div style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.8px', color: 'var(--bad)', fontVariantNumeric: 'tabular-nums' }}>
+                {formattedExitsVal}
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid var(--stroke)' }}>
+              <span style={{ fontSize: '12px', color: 'var(--muted)' }}>Peças entregues:</span>
+              <strong style={{ fontSize: '13px', color: 'var(--ink)' }}>-{monthExitsQty} un.</strong>
             </div>
           </section>
         </div>

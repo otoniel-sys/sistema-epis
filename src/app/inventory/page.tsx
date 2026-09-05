@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma'
-import { Plus } from 'lucide-react'
+import { Plus, ArrowDownToLine } from 'lucide-react'
 import Link from 'next/link'
 import { InventoryFilter } from '@/components/InventoryFilter'
 
@@ -33,9 +33,14 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           
           <InventoryFilter />
 
-          <Link href="/inventory/new" className="btn-primary">
-            <Plus size={20} /> Novo EPI
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <Link href="/inventory/entry" className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <ArrowDownToLine size={18} /> Registrar Entrada
+            </Link>
+            <Link href="/inventory/new" className="btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <Plus size={18} /> Novo EPI
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -81,9 +86,14 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                       )}
                     </td>
                     <td>
-                      <Link href={`/inventory/${eq.id}`} className="btn-secondary" style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem', display: 'inline-block' }}>
-                        Editar
-                      </Link>
+                      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                        <Link href={`/inventory/entry?equipmentId=${eq.id}`} className="btn-secondary" style={{ padding: '0.25rem 0.55rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--good)' }} title="Dar entrada de estoque deste item">
+                          <ArrowDownToLine size={13} /> Entrada
+                        </Link>
+                        <Link href={`/inventory/${eq.id}`} className="btn-secondary" style={{ padding: '0.25rem 0.55rem', fontSize: '0.8rem', display: 'inline-block' }}>
+                          Editar
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 )

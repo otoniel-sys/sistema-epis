@@ -27,7 +27,7 @@ export async function createEquipment(formData: FormData) {
   const lifespanMonths = parseInt(formData.get('lifespanMonths') as string) || 0
   const replacementCriteria = formData.get('replacementCriteria') as string
 
-  await prisma.equipment.create({
+  const eq = await prisma.equipment.create({
     data: {
       description,
       ca,
@@ -40,8 +40,89 @@ export async function createEquipment(formData: FormData) {
     }
   })
 
+  if (currentStock > 0) {
+    await prisma.stockTransaction.create({
+      data: {
+        equipmentId: eq.id,
+        quantity: currentStock,
+        unitValue,
+        type: 'ENTRADA',
+        date: new Date()
+      }
+    })
+  }
+
   revalidatePath('/inventory')
+  revalidatePath('/reports')
+  revalidatePath('/')
   redirect('/inventory')
+}
+
+export async function createStockEntry(formData: FormData) {
+  const equipmentId = formData.get('equipmentId') as string
+  const quantity = parseInt(formData.get('quantity') as string) || 0
+  const unitValue = parseFloat(formData.get('unitValue') as string) || 0
+  const dateStr = formData.get('date') as string
+  const date = dateStr ? new Date(`${dateStr}T12:00:00.000Z`) : new Date()
+
+  if (!equipmentId) throw new Error('Selecione um EPI')
+  if (quantity <= 0) throw new Error('A quantidade deve ser maior que zero')
+  if (unitValue < 0) throw new Error('O valor unitário não pode ser negativo')
+
+  await prisma.$transaction([
+    prisma.stockTransaction.create({
+      data: {
+        equipmentId,
+        quantity,
+        unitValue,
+        type: 'ENTRADA',
+        date,
+      }
+    }),
+    prisma.equipment.update({
+      where: { id: equipmentId },
+      data: {
+        currentStock: { increment: quantity },
+        ...(unitValue > 0 ? { unitValue } : {})
+      }
+    })
+  ])
+
+  revalidatePath('/inventory')
+  revalidatePath('/reports')
+  revalidatePath('/')
+  redirect('/reports')
+}
+
+export async function deleteStockTransaction(id: string) {
+  const transaction = await prisma.stockTransaction.findUnique({
+    where: { id }
+  })
+  if (!transaction) throw new Error('Transação não encontrada')
+
+  if (transaction.type === 'ENTRADA') {
+    await prisma.$transaction([
+      prisma.equipment.update({
+        where: { id: transaction.equipmentId },
+        data: { currentStock: { decrement: transaction.quantity } }
+      }),
+      prisma.stockTransaction.delete({ where: { id } })
+    ])
+  } else if (transaction.type === 'SAIDA') {
+    await prisma.$transaction([
+      prisma.equipment.update({
+        where: { id: transaction.equipmentId },
+        data: { currentStock: { increment: Math.abs(transaction.quantity) } }
+      }),
+      prisma.stockTransaction.delete({ where: { id } })
+    ])
+  } else {
+    await prisma.stockTransaction.delete({ where: { id } })
+  }
+
+  revalidatePath('/inventory')
+  revalidatePath('/reports')
+  revalidatePath('/')
 }
 
 export async function createAssignment(formData: FormData) {
@@ -62,7 +143,7 @@ export async function createAssignment(formData: FormData) {
   const expirationDate = new Date()
   expirationDate.setMonth(expirationDate.getMonth() + equipment.lifespanMonths)
 
-  // Use a transaction to ensure both operations succeed
+  // Use a transaction to ensure all operations succeed
   await prisma.$transaction([
     // Create the assignment
     prisma.assignment.create({
@@ -81,11 +162,22 @@ export async function createAssignment(formData: FormData) {
       data: {
         currentStock: { decrement: 1 }
       }
+    }),
+    // Record the stock transaction
+    prisma.stockTransaction.create({
+      data: {
+        equipmentId,
+        quantity: -1,
+        unitValue: equipment.unitValue,
+        type: 'SAIDA',
+        date: assignedDate
+      }
     })
   ])
 
   revalidatePath('/assignments')
   revalidatePath('/inventory')
+  revalidatePath('/reports')
   revalidatePath('/')
   redirect('/assignments')
 }
