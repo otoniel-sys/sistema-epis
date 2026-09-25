@@ -57,7 +57,9 @@ model Assignment {
   expirationDate DateTime
   status         String    @default("ACTIVE") // ACTIVE, RETURNED, REPLACED
   returnDate     DateTime?
+  returnReason   String?
   notes          String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 }
+

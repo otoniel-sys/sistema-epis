@@ -26,6 +26,7 @@ export interface EntryItem {
   quantity: number
   unitValue: number
   totalValue: number
+  type?: string
 }
 
 export interface ExitItem {
@@ -39,6 +40,8 @@ export interface ExitItem {
   unitValue: number
   expirationDate: string
   status: string
+  returnDate?: string | null
+  returnReason?: string | null
 }
 
 interface Props {
@@ -250,7 +253,25 @@ export function ReportViewTabs({ epiSummaries, entries, exits, monthName, year }
                 {filteredEntries.map((entry) => (
                   <tr key={entry.id}>
                     <td style={{ fontSize: '13px', color: 'var(--ink)' }}>{entry.date}</td>
-                    <td style={{ fontWeight: 600, color: 'var(--ink)' }}>{entry.equipmentDescription}</td>
+                    <td style={{ fontWeight: 600, color: 'var(--ink)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span>{entry.equipmentDescription}</span>
+                        {entry.type === 'DEVOLUCAO' && (
+                          <span
+                            className="badge"
+                            style={{
+                              background: 'rgba(139, 92, 246, 0.18)',
+                              color: 'var(--accent-primary)',
+                              border: '1px solid rgba(139, 92, 246, 0.3)',
+                              fontSize: '10.5px',
+                              padding: '2px 6px'
+                            }}
+                          >
+                            DEVOLUÇÃO
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td style={{ color: 'var(--muted)', fontSize: '12px' }}>{entry.equipmentCa || '-'}</td>
                     <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--good)' }}>
                       +{entry.quantity} un.
@@ -316,6 +337,12 @@ export function ReportViewTabs({ epiSummaries, entries, exits, monthName, year }
                       <span className={`badge ${exit.status === 'ACTIVE' ? 'badge-warning' : 'badge-success'}`}>
                         {exit.status === 'ACTIVE' ? 'ATIVO' : 'DEVOLVIDO'}
                       </span>
+                      {exit.status === 'RETURNED' && (
+                        <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '4px', lineHeight: 1.3 }}>
+                          {exit.returnReason && <div style={{ fontWeight: 500, color: 'var(--ink-2)' }}>{exit.returnReason}</div>}
+                          {exit.returnDate && <div>Devolvido em {exit.returnDate}</div>}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

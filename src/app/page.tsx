@@ -45,7 +45,7 @@ export default async function Dashboard() {
 
   const monthEntries = await prisma.stockTransaction.findMany({
     where: {
-      type: 'ENTRADA',
+      type: { in: ['ENTRADA', 'DEVOLUCAO'] },
       date: { gte: currentMonthStart, lte: currentMonthEnd }
     },
     include: { equipment: true }
@@ -84,7 +84,11 @@ export default async function Dashboard() {
     lineLabels.push(label)
     
     const count = recentAssignments.filter(a => {
-      return a.assignedDate.getDate() === d.getDate() && a.assignedDate.getMonth() === d.getMonth()
+      return (
+        a.assignedDate.getDate() === d.getDate() &&
+        a.assignedDate.getMonth() === d.getMonth() &&
+        a.assignedDate.getFullYear() === d.getFullYear()
+      )
     }).length
     
     lineData.push(count)

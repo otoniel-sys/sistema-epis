@@ -29,10 +29,10 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     orderBy: { description: 'asc' }
   })
 
-  // Buscar todas as entradas no mês
+  // Buscar todas as entradas no mês (compras e devoluções que retornaram ao estoque)
   const entries = await prisma.stockTransaction.findMany({
     where: {
-      type: 'ENTRADA',
+      type: { in: ['ENTRADA', 'DEVOLUCAO'] },
       date: { gte: startDate, lte: endDate }
     },
     include: { equipment: true },
@@ -162,7 +162,8 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     equipmentCa: e.equipment?.ca || null,
     quantity: e.quantity,
     unitValue: e.unitValue ?? e.equipment?.unitValue ?? 0,
-    totalValue: e.quantity * (e.unitValue ?? e.equipment?.unitValue ?? 0)
+    totalValue: e.quantity * (e.unitValue ?? e.equipment?.unitValue ?? 0),
+    type: e.type
   }))
 
   const formattedExits: ExitItem[] = assignments.map(a => ({
@@ -175,7 +176,9 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     employeeDept: a.employee?.department || '',
     unitValue: a.equipment?.unitValue || 0,
     expirationDate: new Date(a.expirationDate).toLocaleDateString('pt-BR'),
-    status: a.status
+    status: a.status,
+    returnDate: a.returnDate ? new Date(a.returnDate).toLocaleDateString('pt-BR') : null,
+    returnReason: a.returnReason || null
   }))
 
   const formatCurrency = (val: number) => {
