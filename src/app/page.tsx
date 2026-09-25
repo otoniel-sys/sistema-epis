@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma'
 import { TrendingUp, ArrowDownToLine, ArrowUpFromLine, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { GaugeChart, LineChart } from '@/components/DashboardCharts'
+import { ExpirationAlertsCard, ExpiringAssignment } from '@/components/ExpirationAlertsCard'
 
 export const revalidate = 0;
 
@@ -14,7 +15,8 @@ export default async function Dashboard() {
   // but let's just get all active assignments.
   const assignments = await prisma.assignment.findMany({
     where: { status: 'ACTIVE' },
-    include: { employee: true, equipment: true }
+    include: { employee: true, equipment: true },
+    orderBy: { expirationDate: 'asc' }
   })
 
   // 1. Total Value & Health
@@ -108,13 +110,27 @@ export default async function Dashboard() {
 
   const totalActiveAssignments = assignments.length
 
-  // Expiring (Tabela)
-  const next30Days = new Date()
-  next30Days.setDate(today.getDate() + 30)
-
-  const expiring = assignments.filter(a => {
-    return a.expirationDate <= next30Days
-  }).sort((a, b) => a.expirationDate.getTime() - b.expirationDate.getTime())
+  const formattedExpiringAssignments: ExpiringAssignment[] = assignments.map(a => ({
+    id: a.id,
+    assignedDate: a.assignedDate.toLocaleDateString('pt-BR'),
+    expirationDate: a.expirationDate.toLocaleDateString('pt-BR'),
+    expirationTimestamp: a.expirationDate.getTime(),
+    status: a.status,
+    employee: {
+      id: a.employee.id,
+      name: a.employee.name,
+      role: a.employee.role,
+      department: a.employee.department,
+    },
+    equipment: {
+      id: a.equipment.id,
+      description: a.equipment.description,
+      ca: a.equipment.ca,
+      type: a.equipment.type,
+      currentStock: a.equipment.currentStock,
+      lifespanMonths: a.equipment.lifespanMonths,
+    }
+  }))
 
   const formattedTotal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)
   const formattedEntriesVal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(monthEntriesVal)
@@ -268,50 +284,7 @@ export default async function Dashboard() {
         </div>
 
         <div style={{ gridColumn: 'span 12' }}>
-          <section style={{ background: 'var(--plane)', border: 'var(--bw) solid var(--stroke)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)', padding: '20px 22px', height: '100%' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '16px', marginBottom: '14px' }}>
-              <div>
-                <b style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>Alertas de Vencimento</b>
-                <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '3px' }}>próximos 30 dias</div>
-              </div>
-            </div>
-            
-            {expiring.length === 0 ? (
-              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)' }}>
-                Nenhum EPI vencendo nos próximos 30 dias.
-              </div>
-            ) : (
-              <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '350px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead style={{ position: 'sticky', top: 0, background: 'var(--plane)', zIndex: 1 }}>
-                    <tr>
-                      <th style={{ textAlign: 'left', fontSize: '10.5px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', padding: '10px 8px 10px 0', borderBottom: 'var(--bw) solid var(--stroke)' }}>Colaborador</th>
-                      <th style={{ textAlign: 'left', fontSize: '10.5px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', padding: '10px 8px 10px 0', borderBottom: 'var(--bw) solid var(--stroke)' }}>EPI</th>
-                      <th style={{ textAlign: 'left', fontSize: '10.5px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', padding: '10px 8px 10px 0', borderBottom: 'var(--bw) solid var(--stroke)' }}>Entrega</th>
-                      <th style={{ textAlign: 'right', fontSize: '10.5px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', padding: '10px 8px 10px 0', borderBottom: 'var(--bw) solid var(--stroke)' }}>Vencimento</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {expiring.map(a => {
-                      const isExpired = a.expirationDate < today
-                      return (
-                        <tr key={a.id}>
-                          <td style={{ padding: '11px 8px 11px 0', borderBottom: 'var(--bw) solid var(--stroke)', fontSize: '13.5px', color: 'var(--ink)' }}>{a.employee.name}</td>
-                          <td style={{ padding: '11px 8px 11px 0', borderBottom: 'var(--bw) solid var(--stroke)', fontSize: '13.5px', color: 'var(--ink-2)' }}>{a.equipment.description}</td>
-                          <td style={{ padding: '11px 8px 11px 0', borderBottom: 'var(--bw) solid var(--stroke)', fontSize: '13px', color: 'var(--muted)' }}>{a.assignedDate.toLocaleDateString('pt-BR')}</td>
-                          <td style={{ padding: '11px 8px 11px 0', borderBottom: 'var(--bw) solid var(--stroke)', fontSize: '13.5px', color: 'var(--ink)', textAlign: 'right' }}>
-                            <span style={{ fontSize: '11.5px', fontWeight: 700, padding: '3px 8px', borderRadius: 'var(--radius)', color: isExpired ? 'var(--bad)' : 'var(--warn)', background: isExpired ? 'var(--bad-bg)' : 'var(--warn-bg)' }}>
-                              {a.expirationDate.toLocaleDateString('pt-BR')}
-                            </span>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
+          <ExpirationAlertsCard assignments={formattedExpiringAssignments} />
         </div>
 
       </div>
